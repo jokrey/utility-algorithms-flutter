@@ -23,3 +23,4 @@ When using the webrtc functionalities, you need to add a few permissions.
 Please refer to https://pub.dev/packages/flutter_webrtc
 
 If you host your own signaling server and which to use ssl, you need to have a certificate. If it is self signed, you need to add it.
+Please refer to github.com/jokrey/call1friend for a complete example
