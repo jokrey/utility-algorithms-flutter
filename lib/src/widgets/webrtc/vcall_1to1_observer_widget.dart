@@ -40,7 +40,7 @@ class _VCall1to1ObserverWS extends State<VCall1to1AsObserverWidget> {
 
   _VCall1to1ObserverWS(String self,List<String>remoteNames,String host,int port)
     : _callObserver = VCall1to1RemoteObserver(
-      remoteNames, MinimalSignalerImpl(self, host, port)
+      remoteNames, MinimalSignalerImpl(self, true, host, port)
   ) {
     if(_callObserver.remoteProviders.length != 2) {
       throw ArgumentError("this widget can only display two remotes");

@@ -27,8 +27,8 @@ class _TestConnectTo1to1CallWidgetState
           return VCall1to1Widget(
             call: VCall1to1(_enterOwnName.text, _enterRemoteName.text,
               MinimalSignalerImpl(
-                _enterOwnName.text, _enterHost.text,
-                int.parse(_enterPort.text)
+                _enterOwnName.text,
+                true, _enterHost.text, int.parse(_enterPort.text)
               )
             ),
           );

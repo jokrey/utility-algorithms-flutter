@@ -18,13 +18,16 @@ class MinimalSignalerImpl implements MinimalSignaler {
   final String claimedName;
   ///The ip or dns this client will attempt to reach the server at
   @protected
+  final bool encryptedConnection;
+  ///The ip or dns this client will attempt to reach the server at
+  @protected
   final String serverAddress;
   ///The port this client will attempt to reach the server at
   @protected
   final int serverPort;
 
   ///Constructor
-  MinimalSignalerImpl(this.claimedName, this.serverAddress, this.serverPort);
+  MinimalSignalerImpl(this.claimedName, this.encryptedConnection, this.serverAddress, this.serverPort);
 
   final Map<PeerId, RemoteVideoProviderInternal> _remotes = {};
   @override
@@ -41,7 +44,7 @@ class MinimalSignalerImpl implements MinimalSignaler {
   ///Protected, used by overrides to connect to the correct url
   @protected
   Future<ClientConnection> createConnectionToServer() async {
-    var url = 'https://$serverAddress:$serverPort/signaling?user=$claimedName';
+    var url = (this.encryptedConnection?"https":"http")+'://$serverAddress:$serverPort/signaling?user=$claimedName';
     return connectToWSClientableServer(url);
   }
 

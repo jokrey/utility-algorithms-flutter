@@ -29,7 +29,7 @@ class _TestConnectTo1to1CallInRoomWidgetState
             call: VCall1to1(_enterOwnName.text, _enterRemoteName.text,
               RoomSignalerImpl(
                 _enterRoomName.text, _enterOwnName.text,
-                _enterHost.text, int.parse(_enterPort.text)
+                  true, _enterHost.text, int.parse(_enterPort.text)
               )
             ),
           );

@@ -31,7 +31,7 @@ class _TestConnectTo1to1ObservableCallWidgetState
               _enterOwnName.text, _enterRemoteName.text,
               _enterAllowedRemoteObserver.text,
               MinimalSignalerImpl(
-                _enterOwnName.text, _enterHost.text, int.parse(_enterPort.text)
+                _enterOwnName.text, true, _enterHost.text, int.parse(_enterPort.text)
               )
             )
           );
