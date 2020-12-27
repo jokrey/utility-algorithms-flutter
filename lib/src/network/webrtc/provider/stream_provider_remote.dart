@@ -92,9 +92,9 @@ class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
   @override
   Future<MediaStream> initStream() async {
     peerConnection = await createPeerConnection({
-      ..._iceServers,
+      ...iceServers,
       ...{'sdpSemantics': 'unified-plan'}
-    }, _config);
+    }, config);
 
     await transceiverSpecificationCallback(peerConnection);
 
@@ -166,30 +166,6 @@ class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
     prematurelyReceivedCandidates.clear();
   }
 
-
-  final Map<String, dynamic> _config = {
-    'mandatory': [
-      {}
-    ],
-    'optional': [
-      {'DtlsSrtpKeyAgreement': true},
-    ]
-  };
-  final Map<String, dynamic> _iceServers = {
-    'iceServers': [
-      {'url': 'stun:stun.l.google.com:19302'},
-      /*
-       * turn server configuration example.
-      {
-        'url': 'turn:123.45.67.89:3478',
-        'username': 'change_to_real_user',
-        'credential': 'change_to_real_secret'
-      },
-      */
-    ]
-  };
-
-
   @override
   Future<void> offer() async {
     await initStream();
@@ -198,3 +174,32 @@ class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
     signalingInterface.relayOffer(id, s);
   }
 }
+
+
+
+///Peer connection config
+///customize according to webrtc doc directly.
+Map<String, dynamic> config = {
+  'mandatory': [
+    {}
+  ],
+  'optional': [
+    {'DtlsSrtpKeyAgreement': true},
+  ]
+};
+
+///Ice servers config. Add stun or turn servers.
+///customize according to webrtc doc directly.
+Map<String, dynamic> iceServers = {
+  'iceServers': [
+    {'url': 'stun:stun.l.google.com:19302'},
+    /*
+       * turn server configuration example.
+      {
+        'url': 'turn:123.45.67.89:3478',
+        'username': 'change_to_real_user',
+        'credential': 'change_to_real_secret'
+      },
+      */
+  ]
+};
