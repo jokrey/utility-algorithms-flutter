@@ -8,4 +8,13 @@ Encapsulates some complicated network signaling stuff and provides a websocket w
 
 ## Getting Started
 
-Import this project into yours directly from github. I will detail how, if and when I find out.
+Import this project into yours directly from github.
+
+Simply add the following entry to your pubspec.yaml dependencies
+
+```yaml
+jokrey_utilities:
+  git:
+    url: git://github.com/jokrey/utility-algorithms-flutter.git
+    ref: master
+```
