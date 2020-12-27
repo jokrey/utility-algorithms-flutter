@@ -18,3 +18,6 @@ jokrey_utilities:
     url: git://github.com/jokrey/utility-algorithms-flutter.git
     ref: master
 ```
+
+When using the webrtc functionalities, you need to add a few permissions.
+Please refer to https://pub.dev/packages/flutter_webrtc
