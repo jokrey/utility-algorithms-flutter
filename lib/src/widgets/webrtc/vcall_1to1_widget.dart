@@ -66,7 +66,6 @@ class _VCall1to1WidgetState extends State<VCall1to1Widget> {
       await _localRenderer.initialize();
       await _remoteRenderer.initialize();
       await call.init();
-      print("init");
     // ignore: avoid_catches_without_on_clauses
     } catch (e) {//required, because anything can be thrown, not just exceptions
       print("error in init: $e");

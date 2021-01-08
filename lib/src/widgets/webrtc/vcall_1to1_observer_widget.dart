@@ -12,47 +12,35 @@ import '../michelangelo/circular_waiting_widget.dart';
 
 ///Widget to display a 1 to 1 call
 class VCall1to1AsObserverWidget extends StatefulWidget {
-  final String _ownName;
-  final List<String> _remoteNames;
-  final String _host;
-  final int _port;
+  final VCall1to1RemoteObserver _observedCall;
 
   ///Constructor - will init a VCall1to1 and a minimal signaler impl
   ///Will initialize and properly connect a local and remote provider
   ///Will properly connect signaler to remote provider
   VCall1to1AsObserverWidget({Key key,
-    @required String ownName,
-    @required List<String> remoteNames,
-    @required String host,
-    @required int port}) :
-        _ownName = ownName,_remoteNames = remoteNames,_host = host,_port = port,
-        super(key: key);
+                            @required VCall1to1RemoteObserver observedCall})
+      : _observedCall = observedCall, super(key: key);
 
   @override
-  _VCall1to1ObserverWS createState() => _VCall1to1ObserverWS(
-    _ownName, _remoteNames, _host, _port
-  );
+  _VCall1to1ObserverWS createState() => _VCall1to1ObserverWS(_observedCall);
 }
 
 class _VCall1to1ObserverWS extends State<VCall1to1AsObserverWidget> {
+  final VCall1to1RemoteObserver _observedCall;
   final List<RTCVideoRenderer> _remoteRenderers = [];
-  final VCall1to1RemoteObserver _callObserver;
 
-  _VCall1to1ObserverWS(String self,List<String>remoteNames,String host,int port)
-    : _callObserver = VCall1to1RemoteObserver(
-      remoteNames, MinimalSignalerImpl(self, true, host, port)
-  ) {
-    if(_callObserver.remoteProviders.length != 2) {
+  _VCall1to1ObserverWS(this._observedCall) {
+    if(_observedCall.remoteProviders.length != 2) {
       throw ArgumentError("this widget can only display two remotes");
     }
-    for(var remoteProvider in _callObserver.remoteProviders) {
+    for(var remoteProvider in _observedCall.remoteProviders) {
       var remoteRenderer = RTCVideoRenderer();
       _remoteRenderers.add(remoteRenderer);
       remoteProvider.addObserver((stream) async {
         remoteRenderer.srcObject = stream;
         if(mounted &&
-            _callObserver.signaler!=null &&
-            _callObserver.signaler.isConnected()) {
+            _observedCall.signaler!=null &&
+            _observedCall.signaler.isConnected()) {
           setState(() {});
         }
       });
@@ -71,15 +59,23 @@ class _VCall1to1ObserverWS extends State<VCall1to1AsObserverWidget> {
   }
 
   _init() async {
-    _callObserver.signaler.addOnClosedObserver((code) async {
-      if(code != WebSocketStatus.normalClosure) {//if so, we already popped it
+    try {
+      _observedCall.signaler.addOnClosedObserver((code) async {
+        if(mounted) {
+          Navigator.pop(context, false);
+        }
+      });
+      for(var renderer in _remoteRenderers) {
+        await renderer.initialize();
+      }
+      await _observedCall.init();
+      // ignore: avoid_catches_without_on_clauses
+    } catch (e) {//required, because anything can be thrown, not just exceptions
+      print("error in init: $e");
+      if(mounted) {
         Navigator.pop(context, false);
       }
-    });
-    for(var renderer in _remoteRenderers) {
-      await renderer.initialize();
     }
-    await _callObserver.init();
   }
 
   @override
@@ -89,7 +85,7 @@ class _VCall1to1ObserverWS extends State<VCall1to1AsObserverWidget> {
   }
 
   Future<void> close() async {
-    await _callObserver.close(closeSignalerConnection: true);
+    await _observedCall.close(closeSignalerConnection: true);
     for(var renderer in _remoteRenderers) {
       await renderer.dispose();
     }
