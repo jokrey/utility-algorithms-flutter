@@ -25,4 +25,4 @@ Please refer to https://pub.dev/packages/flutter_webrtc
 If you host your own signaling server and which to use ssl, you need to have a certificate. If it is self signed, you need to add it.
 Always prefer to use a 'real' certificate, for example a free one by Let's Encrypt.
 
-Please refer to github.com/jokrey/call1friend for a complete example of how to use this package's web rtc part.
+Please refer to github.com/jokrey/call1friend for a complete example of how to use this package's webrtc part.
