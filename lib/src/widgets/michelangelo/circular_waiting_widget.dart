@@ -4,16 +4,24 @@ import 'package:flutter/material.dart';
 class CircularWaitingWidget extends StatelessWidget {
   ///width and height in pixels
   final double size;
+
   ///Text, length of text not checked to fit
   final String text;
+
   ///Size of text
   final double textSize;
+
   ///Width of circular indicator
   final double strokeWidth;
+
   ///Constructor
   const CircularWaitingWidget(
-      {Key key, this.size, this.text, this.textSize = 30, this.strokeWidth = 11}
-  ) : super(key: key);
+      {Key key,
+      this.size,
+      this.text,
+      this.textSize = 30,
+      this.strokeWidth = 11})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,23 +34,19 @@ class CircularWaitingWidget extends StatelessWidget {
               height: size,
               child: CircularProgressIndicator(
                   strokeWidth: strokeWidth,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white12)
-              ),
-
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white12)),
             ),
           ),
           Center(
               child: Text(
-                text,
-                style: TextStyle(
-                  fontSize: textSize,
-                  color: Colors.white24,
-                ),
-              )
-          ),
+            text,
+            style: TextStyle(
+              fontSize: textSize,
+              color: Colors.white24,
+            ),
+          )),
         ],
       ),
     );
   }
-
 }

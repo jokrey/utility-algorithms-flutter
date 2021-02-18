@@ -19,11 +19,11 @@ class _TestConnectTo1to1CallInRoomWidgetState
     extends State<TestConnectTo1to1CallInRoomWidget> {
   final _enterIceServers = IceServersConfigurationController()
     ..iceServers = defaultIceServers;
-  final _enterBaseUrl = TextEditingController()
-    ..text = "https://mlabstayin.rocks/signaling";
+  final _enterBaseUrl = TextEditingController();
   final _enterRoomName = TextEditingController()..text = "testAndDebug";
   final _enterOwnName = TextEditingController()..text = kIsWeb ? "c" : "s";
   final _enterRemoteName = TextEditingController()..text = kIsWeb ? "s" : "c";
+
   _sendLobby(BuildContext context) async {
     var initialConnectSuccessful =
         await Navigator.push(context, MaterialPageRoute(builder: (context) {

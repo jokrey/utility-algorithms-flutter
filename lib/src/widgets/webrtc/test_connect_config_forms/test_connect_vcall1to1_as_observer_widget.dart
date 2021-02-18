@@ -17,11 +17,11 @@ class _TestConnectAsObserverWidgetState
     extends State<TestConnectAsObserverWidget> {
   final _enterIceServers = IceServersConfigurationController()
     ..iceServers = defaultIceServers;
-  final _enterBaseUrl = TextEditingController()
-    ..text = "https://mlabstayin.rocks/signaling";
+  final _enterBaseUrl = TextEditingController();
   final _ownName = TextEditingController()..text = "parent";
   final _enterRemoteName1 = TextEditingController()..text = "c";
   final _enterRemoteName2 = TextEditingController()..text = "s";
+
   _sendLobby(BuildContext context) async {
     var initialConnectSuccessful =
         await Navigator.push(context, MaterialPageRoute(builder: (context) {

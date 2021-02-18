@@ -18,7 +18,7 @@ class MinimalSignalerImpl implements MinimalSignaler {
   final String claimedName;
 
   ///The baseurl this client will attempt to reach the server at
-  ///for example: https://mlabstayin.rocks/signaling
+  ///for example: https://dns.com/route
   @protected
   final String baseUrl;
 
@@ -26,6 +26,7 @@ class MinimalSignalerImpl implements MinimalSignaler {
   MinimalSignalerImpl(this.claimedName, this.baseUrl);
 
   final Map<PeerId, RemoteVideoProviderInternal> _remotes = {};
+
   @override
   void addRemoteProvider(RemoteVideoProviderInternal provider) {
     _remotes[provider.id] = provider;
@@ -42,6 +43,7 @@ class MinimalSignalerImpl implements MinimalSignaler {
   }
 
   ClientConnection _signalingClient;
+
   @override
   Future<bool> connect() async {
     try {
@@ -112,6 +114,7 @@ class MinimalSignalerImpl implements MinimalSignaler {
   }
 
   final Observable<int> _onClosedObservable = Observable();
+
   @override
   void addOnClosedObserver(Observer<int> onClosed) {
     _onClosedObservable.addObserver(onClosed);

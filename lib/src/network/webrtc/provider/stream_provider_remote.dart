@@ -7,8 +7,8 @@ import 'stream_provider_local.dart';
 
 ///Callback for the transceiver specification by RemoteVideoProvider user.
 ///See 'setTransceiverSpecificationCallback'
-typedef TransceiverSpecificationCallback =
-  Future<void> Function(RTCPeerConnection);
+typedef TransceiverSpecificationCallback = Future<void> Function(
+    RTCPeerConnection);
 
 ///Public Remote Provider Interface
 // ignore: one_member_abstracts
@@ -18,8 +18,8 @@ abstract class RemoteVideoProvider {
 }
 
 ///Internal Remote Provider Interface - can be exposed for own, foreign signaler
-abstract class RemoteVideoProviderInternal
-    extends StreamProvider implements RemoteVideoProvider {
+abstract class RemoteVideoProviderInternal extends StreamProvider
+    implements RemoteVideoProvider {
   ///Constructor, calls super
   RemoteVideoProviderInternal(PeerId id) : super(id);
 
@@ -28,10 +28,12 @@ abstract class RemoteVideoProviderInternal
   ///   store the candidate until the connection becomes available
   ///     (to support ice candidate trickling)
   Future<void> newIceCandidateReceived(RTCIceCandidate candidate);
+
   ///Shall be called by the signaler
   ///Implementation shall add the description to the peer connection
   ///May throw an error if the peer connection is not initialized
   Future<void> newRemoteDescription(RTCSessionDescription description);
+
   ///Shall be queried by the signaler, creates an answer to an offer
   ///Simply relays the call to the peer connection
   ///May throw an error if the peer connection is not initialized
@@ -40,6 +42,7 @@ abstract class RemoteVideoProviderInternal
   ///Shall be set by the call implementation
   ///Any functionality that requires signaling will be handled by given signaler
   void setSignaler(MinimalSignaler signaling);
+
   ///Shall be set by the using implementation
   ///Will be called right after the peer connection is created,
   ///   the ice candidates callback is initialized right after and expects this.
@@ -47,14 +50,15 @@ abstract class RemoteVideoProviderInternal
   ///     be received and no data is sent.
   ///MUST be set, otherwise any method may throw an error.
   void setTransceiverSpecificationCallback(TransceiverSpecificationCallback cb);
+
   ///'setTransceiverSpecificationCallback' can be called with:
   /// 'createDefaultLocalSendAndRecvTransceiverSpecificationCallback'
   /// to create the default sending and receiving transceivers.
   /// Will initialize the providers so they can provide bidirectional call.
   static TransceiverSpecificationCallback
-    createDefaultLocalSendAndRecvTransceiverSpecificationCallback
-      (LocalVideoProviderInternal lP) =>
-      (peerConnection) async => await lP.addTracksTo(peerConnection);
+      createDefaultLocalSendAndRecvTransceiverSpecificationCallback(
+              LocalVideoProviderInternal lP) =>
+          (peerConnection) async => await lP.addTracksTo(peerConnection);
 
   ///Creates an implementation of this interface, with defaultIceServers
   static RemoteVideoProviderInternal create(String id) =>
@@ -62,7 +66,7 @@ abstract class RemoteVideoProviderInternal
 
   ///Creates an implementation of this interface, with the given iceServers
   static RemoteVideoProviderInternal createWith(
-      String id, List<Map<String, String>> iceServers) =>
+          String id, List<Map<String, String>> iceServers) =>
       _RemoteVideoProviderImpl(PeerId(id), iceServers: iceServers);
 
   ///Will stream the provided provider to the remote peer.
@@ -71,9 +75,7 @@ abstract class RemoteVideoProviderInternal
   void setLocal(LocalVideoProviderInternal localProvider) {
     setTransceiverSpecificationCallback(
         createDefaultLocalSendAndRecvTransceiverSpecificationCallback(
-          localProvider
-        )
-    );
+            localProvider));
   }
 }
 
@@ -85,7 +87,7 @@ const List<Map<String, String>> defaultIceServers = [
   {'url': 'stun:stun.fwdnet.net'},
   {'url': 'stun:stunserver.org'},
   {
-    'url': 'turn:lmservicesip.ddns.net:3478',
+    'url': 'turn:services.ddns.net:3478',
     'username': 'guest',
     'credential': 'somepassword'
   },
@@ -93,17 +95,24 @@ const List<Map<String, String>> defaultIceServers = [
 
 class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
   List<Map<String, String>> iceServers;
-  _RemoteVideoProviderImpl(id,{this.iceServers=defaultIceServers}):super(id);
+
+  _RemoteVideoProviderImpl(id, {this.iceServers = defaultIceServers})
+      : super(id);
 
   RTCPeerConnection peerConnection;
 
   Function(RTCPeerConnection) transceiverSpecificationCallback;
+
   @override
-  void setTransceiverSpecificationCallback(TransceiverSpecificationCallback cb){
+  void setTransceiverSpecificationCallback(
+      TransceiverSpecificationCallback cb) {
     transceiverSpecificationCallback = cb;
   }
+
   MinimalSignaler signalingInterface;
-  @override void setSignaler(MinimalSignaler signaling) {
+
+  @override
+  void setSignaler(MinimalSignaler signaling) {
     signalingInterface = signaling;
   }
 
@@ -112,9 +121,7 @@ class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
   @override
   Future<MediaStream> initStream() async {
     peerConnection = await createPeerConnection({
-      ...{
-        'iceServers': iceServers
-      },
+      ...{'iceServers': iceServers},
       ...{'sdpSemantics': 'unified-plan'}
     }, constraints);
 
@@ -156,7 +163,7 @@ class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
       stream = null;
     };
 
-    for(var prc in prematurelyReceivedCandidates) {
+    for (var prc in prematurelyReceivedCandidates) {
       await peerConnection.addCandidate(prc);
     }
     prematurelyReceivedCandidates.clear();
@@ -166,7 +173,7 @@ class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
 
   @override
   Future<void> newIceCandidateReceived(RTCIceCandidate candidate) async {
-    if(peerConnection != null) {
+    if (peerConnection != null) {
       print('adding new ice candidate - to peer connection');
       await peerConnection.addCandidate(candidate);
     } else {
@@ -174,10 +181,13 @@ class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
       prematurelyReceivedCandidates.add(candidate);
     }
   }
+
   @override
   Future<void> newRemoteDescription(RTCSessionDescription description) =>
-    peerConnection.setRemoteDescription(description);
-  @override Future<RTCSessionDescription> createAnswer() async {
+      peerConnection.setRemoteDescription(description);
+
+  @override
+  Future<RTCSessionDescription> createAnswer() async {
     var s = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(s);
     return s;
@@ -198,16 +208,14 @@ class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
     signalingInterface.relayOffer(id, s);
   }
 
-  @override bool isConnected() {
-    return peerConnection != null && (
-        super.isConnected() ||
-        peerConnection.connectionState ==
-            RTCPeerConnectionState.RTCPeerConnectionStateConnected
-    );
+  @override
+  bool isConnected() {
+    return peerConnection != null &&
+        (super.isConnected() ||
+            peerConnection.connectionState ==
+                RTCPeerConnectionState.RTCPeerConnectionStateConnected);
   }
 }
-
-
 
 ///Peer connection config
 ///customize according to webrtc doc directly.

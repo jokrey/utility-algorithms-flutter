@@ -42,6 +42,7 @@ class _TestConnectAsObserverInRoomWidgetState
       _enterOwnName,
       _enterRemote1Name,
       _enterRemote2Name;
+
   _TestConnectAsObserverInRoomWidgetState(
       baseUrl, roomName, ownName, remote1Name, remote2Name, iceServers)
       : _enterIceServers = IceServersConfigurationController()

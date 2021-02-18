@@ -7,12 +7,13 @@ const defaultButtonBgColor = Color(0xff5000e6);
 class WidthFillingTextButton extends SizedBox {
   ///Constructor for a big wide button
   WidthFillingTextButton(String text,
-      {VoidCallback onPressed, Color bg=defaultButtonBgColor}) :
-        super(width: double.infinity, // match_parent
-          child: RaisedButton(
-            child: Text(text),
-            onPressed: onPressed,
-            color: bg,
-            textColor: Colors.white,
-          ));
+      {VoidCallback onPressed, Color bg = defaultButtonBgColor})
+      : super(
+            width: double.infinity, // match_parent
+            child: RaisedButton(
+              child: Text(text),
+              onPressed: onPressed,
+              color: bg,
+              textColor: Colors.white,
+            ));
 }

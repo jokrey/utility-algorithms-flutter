@@ -48,9 +48,9 @@ class _TestConnectTo1to1ObservableCallInRoomWidgetState
       _enterRemoteName,
       _enterAllowedRemoteObserver;
   DateTime _enterExpectedMeetingEndTime;
-  _TestConnectTo1to1ObservableCallInRoomWidgetState(
-      baseUrl, roomName, ownName, remoteName, allowedObserverName,
-      expectedMeetingEndTime, iceServers)
+
+  _TestConnectTo1to1ObservableCallInRoomWidgetState(baseUrl, roomName, ownName,
+      remoteName, allowedObserverName, expectedMeetingEndTime, iceServers)
       : _enterIceServers = IceServersConfigurationController()
           ..iceServers = iceServers,
         _enterBaseUrl = TextEditingController()..text = baseUrl,
@@ -65,19 +65,18 @@ class _TestConnectTo1to1ObservableCallInRoomWidgetState
     var initialConnectSuccessful =
         await Navigator.push(context, MaterialPageRoute(builder: (context) {
       return createObservableVCall1to1Widget(
-        ObservableVCall1to1(
-          _enterOwnName.text,
-          _enterRemoteName.text,
-          _enterAllowedRemoteObserver.text,
-          RoomSignalerImpl(
-            _enterRoomName.text,
+          ObservableVCall1to1(
             _enterOwnName.text,
-            _enterBaseUrl.text,
+            _enterRemoteName.text,
+            _enterAllowedRemoteObserver.text,
+            RoomSignalerImpl(
+              _enterRoomName.text,
+              _enterOwnName.text,
+              _enterBaseUrl.text,
+            ),
+            _enterIceServers.iceServers,
           ),
-          _enterIceServers.iceServers,
-        ),
-        _enterExpectedMeetingEndTime
-      );
+          _enterExpectedMeetingEndTime);
     }));
 
     if (!initialConnectSuccessful) {
@@ -143,7 +142,7 @@ class _TestConnectTo1to1ObservableCallInRoomWidgetState
               dateLabelText: 'Expected Meeting Date',
               timeHintText: 'End Time',
               onChanged: (val) =>
-                _enterExpectedMeetingEndTime = DateTime.tryParse(val),
+                  _enterExpectedMeetingEndTime = DateTime.tryParse(val),
               validator: (val) {
                 return null;
               },

@@ -9,13 +9,14 @@ class Observable<T> {
 
   ///Add an observer
   void addObserver(Observer<T> observer) => _observers.add(observer);
+
   ///Remove an observer (must be same f-pointer, since Functions incomparable)
   void removeObserver(Observer<T> observer) => _observers.remove(observer);
 
   ///Calls all registered observers with the change, can be used asynchronously
   Future<void> notifyAll(T change) async {
-    for(var o in _observers) {
-      await o(change);//todo call them simultaneously? Not await, but await for
+    for (var o in _observers) {
+      await o(change); //todo call them simultaneously? Not await, but await for
     }
   }
 }

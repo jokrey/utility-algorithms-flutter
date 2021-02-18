@@ -9,12 +9,15 @@ import '../peer_id.dart';
 abstract class StreamProvider extends Observable<MediaStream> {
   ///Given id of this stream/provider/peer
   PeerId id;
+
   ///Constructor
   StreamProvider(this.id);
 
   MediaStream _stream;
+
   ///Returns the internal media stream, created using initStream
   MediaStream get stream => _stream;
+
   set stream(MediaStream value) {
     _stream = value;
     notifyAll(stream);
@@ -28,15 +31,17 @@ abstract class StreamProvider extends Observable<MediaStream> {
   ///Returns whether it can be assumed that this provider is connected or not
   ///Not necessarily accurate:
   ///    implementations may take a timeout amount of time to notice disconnect
-  bool isConnected() => stream != null &&
-    (stream.getAudioTracks().isNotEmpty || stream.getVideoTracks().isNotEmpty);
+  bool isConnected() =>
+      stream != null &&
+      (stream.getAudioTracks().isNotEmpty ||
+          stream.getVideoTracks().isNotEmpty);
 
   ///Closes this stream, idempotent
   ///Implementations shall close their own resources also
   @mustCallSuper
   Future<void> closeStream() async {
     stream?.getTracks()?.forEach((element) async {
-      await element.dispose();
+      await element.stop();
     });
     await stream?.dispose();
     stream = null;

@@ -19,24 +19,24 @@ class _TestConnectTo1to1ObservableCallWidgetState
     extends State<TestConnectTo1to1ObservableCallWidget> {
   final _enterIceServers = IceServersConfigurationController()
     ..iceServers = defaultIceServers;
-  final _enterBaseUrl = TextEditingController()
-    ..text = "https://mlabstayin.rocks/signaling";
+  final _enterBaseUrl = TextEditingController();
   final _enterOwnName = TextEditingController()..text = kIsWeb ? "c" : "s";
   final _enterRemoteName = TextEditingController()..text = kIsWeb ? "s" : "c";
   final _enterAllowedRemoteObserver = TextEditingController()..text = "parent";
+
   _sendLobby(BuildContext context) async {
     var initialConnectSuccessful = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) {
         return createObservableVCall1to1Widget(
-          ObservableVCall1to1(
-            _enterOwnName.text,
-            _enterRemoteName.text,
-            _enterAllowedRemoteObserver.text,
-            MinimalSignalerImpl(_enterOwnName.text, _enterBaseUrl.text),
-            _enterIceServers.iceServers,
-          ), null
-        );
+            ObservableVCall1to1(
+              _enterOwnName.text,
+              _enterRemoteName.text,
+              _enterAllowedRemoteObserver.text,
+              MinimalSignalerImpl(_enterOwnName.text, _enterBaseUrl.text),
+              _enterIceServers.iceServers,
+            ),
+            null);
       }),
     );
 
