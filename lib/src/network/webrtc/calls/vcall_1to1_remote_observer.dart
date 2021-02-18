@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import '../provider/stream_provider_remote.dart';
@@ -19,32 +18,36 @@ class VCall1to1RemoteObserver {
   ///The signaler the providers will use to negotiate their connections
   ///  if the signaler is already connected it will not be connected
   ///  otherwise it will be connected to on 'init'
-  VCall1to1RemoteObserver(List<String> remoteNames, this.signaler) {
+  VCall1to1RemoteObserver(
+      List<String> remoteNames, this.signaler, iceServers
+  ) {
     for(var remoteName in remoteNames) {
-      remoteProviders.add(RemoteVideoProviderInternal.create(remoteName));
+      remoteProviders.add(
+        RemoteVideoProviderInternal.createWith(remoteName, iceServers)
+      );
     }
+    _sharedConstructorInit();
+  }
+
+  var _retryGatherRemotesTimer;
+  void _sharedConstructorInit() {
     for(var remoteProvider in remoteProviders) {
       remoteProvider.setSignaler(signaler);
 
       //RECEIVE ONLY TRANSCEIVER FOR THE REMOTE STREAM - Pretty dope
       remoteProvider.setTransceiverSpecificationCallback((peerConnection)async {
-        if(kIsWeb) {
-          throw ArgumentError("cannot add transceiver on web:::: "
-              "BUG: see https://github.com/flutter-webrtc/flutter-webrtc/issues/437");
-        } else {
-          await peerConnection.addTransceiver(
-              kind: RTCRtpMediaType.RTCRtpMediaTypeAudio,
-              init: RTCRtpTransceiverInit(
-                  direction: TransceiverDirection.RecvOnly
-              )
-          );
-          await peerConnection.addTransceiver(
-              kind: RTCRtpMediaType.RTCRtpMediaTypeVideo,
-              init: RTCRtpTransceiverInit(
-                  direction: TransceiverDirection.RecvOnly
-              )
-          );
-        }
+        await peerConnection.addTransceiver(
+            kind: RTCRtpMediaType.RTCRtpMediaTypeAudio,
+            init: RTCRtpTransceiverInit(
+                direction: TransceiverDirection.RecvOnly
+            )
+        );
+        await peerConnection.addTransceiver(
+            kind: RTCRtpMediaType.RTCRtpMediaTypeVideo,
+            init: RTCRtpTransceiverInit(
+                direction: TransceiverDirection.RecvOnly
+            )
+        );
       });
       signaler.addRemoteProvider(remoteProvider);
     }
@@ -52,7 +55,7 @@ class VCall1to1RemoteObserver {
 
     //possibly replace this with a call from the signaling api,
     //  though that feels like overkill also
-    Timer.periodic(Duration(seconds: 10), (timer) async {
+    _retryGatherRemotesTimer = Timer.periodic(Duration(seconds: 5),(timer)async{
       for(var remoteProvider in remoteProviders) {
         if(!remoteProvider.isConnected()) {
           await remoteProvider.offer();
@@ -76,11 +79,12 @@ class VCall1to1RemoteObserver {
 
   ///Closes the signaler if so requested, closes and remote providers
   Future<void> close({bool closeSignalerConnection = false}) async {
-    if(closeSignalerConnection) {
-      await signaler.close();
-    }
+    _retryGatherRemotesTimer.cancel();
     for(var remoteProvider in remoteProviders) {
       await remoteProvider.closeStream();
+    }
+    if(closeSignalerConnection) {
+      await signaler.close();
     }
   }
 }

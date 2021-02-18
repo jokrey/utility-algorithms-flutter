@@ -14,9 +14,19 @@ dependencies:
 
   effective_dart: ^1.0.0
 
-  flutter_webrtc: ^0.5.7
+  #most important
+  flutter_webrtc:
+    git:
+      url: git://github.com/flutter-webrtc/flutter-webrtc.git
+      # the commit that fixed https://github.com/flutter-webrtc/flutter-webrtc/issues/437
+      # Required to observe from browser
+      ref: 61d473e4f53bb2164d9f5a905744fa9208028d59
   http: ^0.12.2
   web_socket_channel: ^1.1.0
+
+  #ui
+  date_time_picker: ^1.1.1
+  flutter_countdown_timer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

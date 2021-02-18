@@ -8,18 +8,21 @@ abstract class LocalVideoProvider {
   ///true: mutes the mic, false: unmutes the mic
   // ignore: avoid_positional_boolean_parameters
   void muteMic(bool muted);
+
   ///return whether the mic is currently muted
   bool isMicMuted();
+
   ///toggles the Microphone mute state
   //default doesn't work for implements (in 2020?!?!?) => muteMic(!isMicMuted())
   void toggleMuteMic();
+
   ///switches the current camera, throws error otherwise
   Future<void> switchCamera();
 }
 
 ///Internal Remote Provider Interface - can be exposed for own, foreign signaler
-abstract class LocalVideoProviderInternal
-    extends StreamProvider implements LocalVideoProvider {
+abstract class LocalVideoProviderInternal extends StreamProvider
+    implements LocalVideoProvider {
   ///Constructor, calls super
   LocalVideoProviderInternal(PeerId id) : super(id);
 
@@ -38,14 +41,16 @@ class _LocalVideoProviderImpl extends LocalVideoProviderInternal {
 
   @override
   Future<MediaStream> initStream() async {
-    final mediaConstraints = <String, dynamic> {
+    final mediaConstraints = <String, dynamic>{
       'audio': true,
       'video': {
         'mandatory': {
           // Provide your own width, height and frame rate here
-          'minWidth': '640',
-          'minHeight': '480',
-          'minFrameRate': '30',
+          // 'minWidth': '640',
+          // 'minHeight': '480',
+          // 'maxWidth': '640',
+          // 'maxHeight': '480',
+          // 'minFrameRate': '5',
         },
         'facingMode': 'user',
         'optional': [],
@@ -56,10 +61,9 @@ class _LocalVideoProviderImpl extends LocalVideoProviderInternal {
     return stream;
   }
 
-
   @override
   Future<void> addTracksTo(RTCPeerConnection peerConnection) async {
-    for(var t in stream.getTracks()) {
+    for (var t in stream.getTracks()) {
       await peerConnection.addTrack(t, stream);
     }
   }

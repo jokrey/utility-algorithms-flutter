@@ -5,49 +5,63 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
+import '../../general/observers.dart';
 import '../../network/webrtc/calls/vcall_1to1.dart';
 import '../michelangelo/circular_waiting_widget.dart';
 
 ///Widget to display a 1 to 1 call
 class VCall1to1Widget extends StatefulWidget {
   final VCall1to1 _call;
+  final List<Observable<dynamic>> _rebuildObservables;
+  final List<Positioned> Function(BuildContext, Orientation) _additionalBuilder;
 
   ///Constructor
-  VCall1to1Widget({Key key, @required VCall1to1 call})
-      : _call = call, super(key: key);
+  VCall1to1Widget({
+    Key key,
+    @required VCall1to1 call,
+    List<Observable<dynamic>> rebuildObservables,
+    List<Positioned> Function(BuildContext, Orientation) additionalBuilder,
+  })  : _call = call,
+        _rebuildObservables = rebuildObservables,
+        _additionalBuilder = additionalBuilder,
+        super(key: key);
 
   @override
-  _VCall1to1WidgetState createState() => _VCall1to1WidgetState(_call);
+  _VCall1to1WidgetState createState() =>
+      _VCall1to1WidgetState(_call, _rebuildObservables, _additionalBuilder);
 }
+
+///padding of control elements in video screen
+const padding = 20.0;
 
 class _VCall1to1WidgetState extends State<VCall1to1Widget> {
   final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
   final RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
   final VCall1to1 call;
+  final List<Positioned> Function(BuildContext, Orientation) additionalBuilder;
 
-  _VCall1to1WidgetState(this.call) {
+  _VCall1to1WidgetState(this.call, rebuildObservables, this.additionalBuilder) {
     call.localProvider.addObserver((stream) async {
       _localRenderer.srcObject = stream;
-      if(mounted && call.signaler != null && call.signaler.isConnected()) {
-        setState(() {});
-      }
+      _rebuild();
     });
     call.remoteProvider.addObserver((stream) async {
       _remoteRenderer.srcObject = stream;
-      if(mounted && call.signaler != null && call.signaler.isConnected()) {
-        setState(() {});
-      }
+      _rebuild();
     });
-    _localRenderer.onResize = () {
-      if(mounted && call.signaler != null && call.signaler.isConnected()) {
-        setState(() {});
-      }
-    };
-    _remoteRenderer.onResize = () {
-      if(mounted && call.signaler != null && call.signaler.isConnected()) {
-        setState(() {});
-      }
-    };
+    _localRenderer.onResize = _rebuild;
+    _remoteRenderer.onResize = _rebuild;
+    for (var rebuildObservable in rebuildObservables) {
+      rebuildObservable.addObserver((_) async {
+        _rebuild();
+      });
+    }
+  }
+
+  _rebuild() {
+    if (mounted && call.signaler != null && call.signaler.isConnected()) {
+      setState(() {});
+    }
   }
 
   @override
@@ -59,17 +73,18 @@ class _VCall1to1WidgetState extends State<VCall1to1Widget> {
   _init() async {
     try {
       call.signaler.addOnClosedObserver((code) async {
-        if(mounted) {
+        if (mounted) {
           Navigator.pop(context, false);
         }
       });
       await _localRenderer.initialize();
       await _remoteRenderer.initialize();
       await call.init();
-    // ignore: avoid_catches_without_on_clauses
-    } catch (e) {//required, because anything can be thrown, not just exceptions
+      // ignore: avoid_catches_without_on_clauses
+    } catch (e) {
+      //required, because anything can be thrown, not just exceptions
       print("error in init: $e");
-      if(mounted) {
+      if (mounted) {
         Navigator.pop(context, false);
       }
     }
@@ -87,14 +102,13 @@ class _VCall1to1WidgetState extends State<VCall1to1Widget> {
     await _remoteRenderer.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: SizedBox(
             width: 200.0,
-            child: Row (
+            child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   FloatingActionButton(
@@ -113,84 +127,78 @@ class _VCall1to1WidgetState extends State<VCall1to1Widget> {
                   ),
                   FloatingActionButton(
                     heroTag: null,
-                    child: call.localProvider.isMicMuted() ?
-                    const Icon(Icons.mic_off) : const Icon(Icons.mic),
-                    onPressed: ()=> setState(call.localProvider.toggleMuteMic),
+                    child: call.localProvider.isMicMuted()
+                        ? const Icon(Icons.mic_off)
+                        : const Icon(Icons.mic),
+                    onPressed: () => setState(call.localProvider.toggleMuteMic),
                   ),
-                ]
-            )
-        ),
+                ])),
         body: OrientationBuilder(builder: (context, orientation) {
           var statusBarHeight = MediaQuery.of(context).padding.top;
           var screenWidth = MediaQuery.of(context).size.width;
           var screenHeight = MediaQuery.of(context).size.height;
-          var padding = 20.0;
-          var maxLDw = min(screenWidth * 0.33, screenWidth-2*padding);
-          var maxLDh = min(screenHeight * 0.33, screenHeight-2*padding);
+          var maxLDw = min(screenWidth * 0.33, screenWidth - 2 * padding);
+          var maxLDh = min(screenHeight * 0.33, screenHeight - 2 * padding);
           var localActive =
               _localRenderer.renderVideo && _localRenderer.videoHeight != 0;
           var remoteActive =
               _remoteRenderer.renderVideo && _remoteRenderer.videoHeight != 0;
 
-          var vW = localActive? _localRenderer.videoWidth.toDouble() : 640;
-          var vH = localActive? _localRenderer.videoHeight.toDouble() : 480;
+          var vW = localActive ? _localRenderer.videoWidth.toDouble() : 640;
+          var vH = localActive ? _localRenderer.videoHeight.toDouble() : 480;
           //todo - this is like a magic number, but missing func in webrtc:
-          if(orientation == Orientation.landscape || kIsWeb) {
-            var tvW = vW;vW=vH;vH=tvW;
+          if (orientation == Orientation.landscape || kIsWeb) {
+            var tvW = vW;
+            vW = vH;
+            vH = tvW;
           }
           var lDw = min(maxLDw, maxLDh) * (vH / (max(vW, vH)));
           var lDh = min(maxLDw, maxLDh) * (vW / (max(vW, vH)));
 
           return Container(
             decoration: BoxDecoration(color: Colors.black54),
-            child: Stack(children: <Widget>[
-              Positioned(
-                left: 0.0,
-                right: 0.0,
-                top: 0.0,
-                bottom: 0.0,
-                child: Container(
-                  margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
-                  width: screenWidth,
-                  height: screenHeight,
-                  child: remoteActive ?
-                      RTCVideoView(_remoteRenderer)
-                    :
-                      CircularWaitingWidget(
-                        text: "Waiting...",
-                        textSize: 44,
-                        strokeWidth: 11,
-                        size: min(screenWidth, screenHeight)-22
-                      ),
-                  decoration: BoxDecoration(color: Colors.black54),
-                )
-              ),
-              Positioned(
-                left: padding,
-                top: padding + statusBarHeight,
-                child: Container(
-                  width: lDw,
-                  height: lDh,
-                  child: localActive ?
-                    RTCVideoView(_localRenderer, mirror: true)
-                      :
-                    CircularWaitingWidget(
-                      text: "Waiting...",
-                      textSize: 22,
-                      strokeWidth: 4,
-                      size: min(lDw, lDh) - 8
-                    ),
-                  decoration: BoxDecoration(
-                    color: localActive ? Colors.transparent : Colors.black87
-                  ),
-                ),
-              )
-            ]),
+            child: Stack(
+                children: <Positioned>[
+                      Positioned(
+                          left: 0.0,
+                          right: 0.0,
+                          top: 0.0,
+                          bottom: 0.0,
+                          child: Container(
+                            margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
+                            width: screenWidth,
+                            height: screenHeight,
+                            child: remoteActive
+                                ? RTCVideoView(_remoteRenderer)
+                                : CircularWaitingWidget(
+                                    text: "Warte auf 📷...",
+                                    textSize: 30,
+                                    strokeWidth: 11,
+                                    size: min(screenWidth, screenHeight) - 22),
+                            decoration: BoxDecoration(color: Colors.black54),
+                          )),
+                      Positioned(
+                        left: padding,
+                        top: padding + statusBarHeight,
+                        child: Container(
+                          width: lDw,
+                          height: lDh,
+                          child: localActive
+                              ? RTCVideoView(_localRenderer, mirror: true)
+                              : CircularWaitingWidget(
+                                  text: "Warte auf 📷...",
+                                  textSize: 22,
+                                  strokeWidth: 4,
+                                  size: min(lDw, lDh) - 8),
+                          decoration: BoxDecoration(
+                              color: localActive
+                                  ? Colors.transparent
+                                  : Colors.black87),
+                        ),
+                      )
+                    ] +
+                    additionalBuilder(context, orientation)),
           );
-        })
-    );
+        }));
   }
 }
-
-
-

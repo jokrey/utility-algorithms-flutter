@@ -15,9 +15,11 @@ class ObservableVCall1to1 extends VCall1to1 {
   ///  to the remote observer with name 'observerName'.
   ///  Typically(depending on signaler's policy), observers with other ids will
   ///    be automatically rejected.
-  ObservableVCall1to1(localName, remoteName, String observerName, signaler)
-      : super(localName, remoteName, signaler) {
-    remoteObserverProvider = RemoteVideoProviderInternal.create(observerName);
+  ObservableVCall1to1(
+      localName, remoteName, String observerName, signaler, iceServers)
+      : super(localName, remoteName, signaler, iceServers) {
+    remoteObserverProvider =
+        RemoteVideoProviderInternal.createWith(observerName, iceServers);
     remoteObserverProvider.setSignaler(signaler);
     remoteObserverProvider.setLocal(localProvider);
     signaler.addRemoteProvider(remoteObserverProvider);
@@ -26,7 +28,7 @@ class ObservableVCall1to1 extends VCall1to1 {
   ///Closes the signaler if so requested, closes the local and remote provider,
   ///  additionally the remote provider stream is also closed.
   Future<void> close({bool closeSignalerConnection = false}) async {
-    await super.close(closeSignalerConnection: closeSignalerConnection);
     await remoteObserverProvider.closeStream();
+    await super.close(closeSignalerConnection: closeSignalerConnection);
   }
 }

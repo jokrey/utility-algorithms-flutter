@@ -26,6 +26,7 @@ export 'src/network/webrtc/signaling/signaling_room_impl.dart';
 //widgets - michelangelo:
 export 'src/widgets/michelangelo/circular_waiting_widget.dart';
 //widgets - webrtc:
-export 'src/widgets/webrtc/observable_vcall_1to1_widget.dart';
+export 'src/widgets/webrtc/ice_server_config_widget.dart';
+export 'src/widgets/webrtc/observable_vcall1to1_widget.dart';
 export 'src/widgets/webrtc/vcall_1to1_observer_widget.dart';
 export 'src/widgets/webrtc/vcall_1to1_widget.dart';

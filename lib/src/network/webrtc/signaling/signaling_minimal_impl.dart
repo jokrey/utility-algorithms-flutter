@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import '../../../general/observers.dart';
+import '../../wsclientable/client.dart';
 import '../peer_id.dart';
 import '../provider/stream_provider_remote.dart';
-import '../../wsclientable/client.dart';
 import 'signaling_minimal.dart';
 
 ///Minimal implementation of most stripped Signaler
@@ -16,18 +16,14 @@ class MinimalSignalerImpl implements MinimalSignaler {
   ///see 'getOwnId()'
   @protected
   final String claimedName;
-  ///The ip or dns this client will attempt to reach the server at
+
+  ///The baseurl this client will attempt to reach the server at
+  ///for example: https://mlabstayin.rocks/signaling
   @protected
-  final bool encryptedConnection;
-  ///The ip or dns this client will attempt to reach the server at
-  @protected
-  final String serverAddress;
-  ///The port this client will attempt to reach the server at
-  @protected
-  final int serverPort;
+  final String baseUrl;
 
   ///Constructor
-  MinimalSignalerImpl(this.claimedName, this.encryptedConnection, this.serverAddress, this.serverPort);
+  MinimalSignalerImpl(this.claimedName, this.baseUrl);
 
   final Map<PeerId, RemoteVideoProviderInternal> _remotes = {};
   @override
@@ -35,17 +31,14 @@ class MinimalSignalerImpl implements MinimalSignaler {
     _remotes[provider.id] = provider;
   }
 
-
   PeerId getOwnId() {
     return PeerId(claimedName);
   }
 
-
   ///Protected, used by overrides to connect to the correct url
   @protected
   Future<ClientConnection> createConnectionToServer() async {
-    var url = (this.encryptedConnection?"https":"http")+'://$serverAddress:$serverPort/signaling?user=$claimedName';
-    return connectToWSClientableServer(url);
+    return connectToWSClientableServer('$baseUrl?user=$claimedName');
   }
 
   ClientConnection _signalingClient;
@@ -53,35 +46,31 @@ class MinimalSignalerImpl implements MinimalSignaler {
   Future<bool> connect() async {
     try {
       _signalingClient = await createConnectionToServer();
-    // ignore: avoid_catches_without_on_clauses
+      // ignore: avoid_catches_without_on_clauses
     } catch (e) {
       print("failed to connect to signaling server: $e");
       return false;
     }
 
-    _signalingClient.addMessageHandler("candidate", (c,_,data) async {
+    _signalingClient.addMessageHandler("candidate", (c, _, data) async {
       var peer = PeerId(data['from']);
       var candidateMap = data['candidate'];
-      var candidate = RTCIceCandidate(
-          candidateMap['candidate'], candidateMap['sdpMid'],
-          candidateMap['sdpMLineIndex']
-      );
+      var candidate = RTCIceCandidate(candidateMap['candidate'],
+          candidateMap['sdpMid'], candidateMap['sdpMLineIndex']);
       await _remotes[peer].newIceCandidateReceived(candidate);
     });
-    _signalingClient.addMessageHandler("answer", (c,_,data) async {
+    _signalingClient.addMessageHandler("answer", (c, _, data) async {
       var peer = PeerId(data['from']);
       var description = data['description'];
-      var sessionDescription = RTCSessionDescription(
-          description['sdp'], description['type']
-      );
+      var sessionDescription =
+          RTCSessionDescription(description['sdp'], description['type']);
       await _remotes[peer].newRemoteDescription(sessionDescription);
     });
-    _signalingClient.addMessageHandler("offer", (c,_,data) async {
+    _signalingClient.addMessageHandler("offer", (c, _, data) async {
       var peer = PeerId(data['from']);
       var description = data['description'];
-      var sessionDescription = RTCSessionDescription(
-          description['sdp'], description['type']
-      );
+      var sessionDescription =
+          RTCSessionDescription(description['sdp'], description['type']);
 
       var remote = _remotes[peer];
       print('offer from $peer, remote: $remote');
@@ -96,9 +85,8 @@ class MinimalSignalerImpl implements MinimalSignaler {
     _signalingClient.onClosedHandler = (c, code, text) {
       _onClosedObservable.notifyAll(code);
     };
-    
-    return _signalingClient.isConnected();
 
+    return _signalingClient.isConnected();
 
     // if (_turnCredential == null) {
     //   try {
@@ -122,7 +110,7 @@ class MinimalSignalerImpl implements MinimalSignaler {
     //   } catch (e) {}
     // }
   }
-  
+
   final Observable<int> _onClosedObservable = Observable();
   @override
   void addOnClosedObserver(Observer<int> onClosed) {
@@ -130,14 +118,13 @@ class MinimalSignalerImpl implements MinimalSignaler {
   }
 
   @override
-  bool isConnected() => _signalingClient!=null &&_signalingClient.isConnected();
+  bool isConnected() =>
+      _signalingClient != null && _signalingClient.isConnected();
 
   @override
   Future<void> close() async {
     _signalingClient.close();
   }
-
-
 
   void relayAnswer(PeerId id, RTCSessionDescription s) {
     _signalingClient.sendMap('answer', {

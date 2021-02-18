@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../../../network/webrtc/calls/vcall_1to1.dart';
-import '../../../network/webrtc/signaling/signaling_minimal_impl.dart';
 
+import '../../../network/webrtc/calls/vcall_1to1.dart';
+import '../../../network/webrtc/provider/stream_provider_remote.dart';
+import '../../../network/webrtc/signaling/signaling_minimal_impl.dart';
+import '../../michelangelo/big_wide_button.dart';
+import '../ice_server_config_widget.dart';
 import '../vcall_1to1_widget.dart';
 
 ///TEST ONLY
@@ -14,9 +17,10 @@ class TestConnectTo1to1CallWidget extends StatefulWidget {
 ///TEST ONLY
 class _TestConnectTo1to1CallWidgetState
     extends State<TestConnectTo1to1CallWidget> {
-  final _enterHost = TextEditingController()
-    ..text = kIsWeb ? "localhost" : "jokrey-manj-lap.fritz.box";
-  final _enterPort = TextEditingController()..text = "8086";
+  final _enterIceServers = IceServersConfigurationController()
+    ..iceServers = defaultIceServers;
+  final _enterBaseUrl = TextEditingController()
+    ..text = "https://mlabstayin.rocks/signaling";
   final _enterOwnName = TextEditingController()..text = kIsWeb ? "c" : "s";
   final _enterRemoteName = TextEditingController()..text = kIsWeb ? "s" : "c";
   _sendLobby(BuildContext context) async {
@@ -25,11 +29,10 @@ class _TestConnectTo1to1CallWidgetState
       MaterialPageRoute(
         builder: (context) {
           return VCall1to1Widget(
-            call: VCall1to1(_enterOwnName.text, _enterRemoteName.text,
-              MinimalSignalerImpl(
-                _enterOwnName.text, true,
-                _enterHost.text, int.parse(_enterPort.text)
-              )
+            call: VCall1to1(
+              _enterOwnName.text, _enterRemoteName.text,
+              MinimalSignalerImpl(_enterOwnName.text, _enterBaseUrl.text),
+              _enterIceServers.iceServers,
             ),
           );
         }
@@ -41,7 +44,7 @@ class _TestConnectTo1to1CallWidgetState
         ..removeCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text("Could not connect to Signaling-Server"),
+            content: Text("Could not connect. Has the call started?"),
             duration: Duration(seconds: 25)
           )
         );
@@ -55,15 +58,18 @@ class _TestConnectTo1to1CallWidgetState
         builder: (context) => Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            TextField(
-              controller: _enterHost,
-              autocorrect: true,
-              decoration: InputDecoration(hintText: 'Enter server address'),
+            WidthFillingTextButton(
+              "Configure Ice Servers(${_enterIceServers.iceServers.length})",
+              onPressed: () async {
+                await Navigator.push(context, MaterialPageRoute(builder:
+                    (context) => IceServersConfigurationWidget(_enterIceServers)
+                ));
+                setState(() {}); //rebuild ice server count in text above
+              }
             ),
             TextField(
-              controller: _enterPort,
-              autocorrect: false,
-              decoration: InputDecoration(hintText: 'Enter server port'),
+              controller: _enterBaseUrl,
+              decoration: InputDecoration(hintText: 'Enter base server url {ex: http(s)://dns(:port)/route}'),
             ),
             TextField(
               controller: _enterOwnName,

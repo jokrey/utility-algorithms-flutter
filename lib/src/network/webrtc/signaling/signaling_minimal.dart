@@ -1,6 +1,6 @@
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import '../../../general/observers.dart';
 
+import '../../../general/observers.dart';
 import '../peer_id.dart';
 import '../provider/stream_provider_remote.dart';
 import 'connectable.dart';

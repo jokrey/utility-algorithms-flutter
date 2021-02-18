@@ -56,9 +56,14 @@ abstract class RemoteVideoProviderInternal
       (LocalVideoProviderInternal lP) =>
       (peerConnection) async => await lP.addTracksTo(peerConnection);
 
-  ///Creates an implementation of this interface
+  ///Creates an implementation of this interface, with defaultIceServers
   static RemoteVideoProviderInternal create(String id) =>
-      _RemoteVideoProviderImpl(PeerId(id));
+      createWith(id, defaultIceServers);
+
+  ///Creates an implementation of this interface, with the given iceServers
+  static RemoteVideoProviderInternal createWith(
+      String id, List<Map<String, String>> iceServers) =>
+      _RemoteVideoProviderImpl(PeerId(id), iceServers: iceServers);
 
   ///Will stream the provided provider to the remote peer.
   ///Will negotiate ice candidates automatically.
@@ -72,8 +77,23 @@ abstract class RemoteVideoProviderInternal
   }
 }
 
+///Ice servers config. Add stun or turn servers.
+///customize according to webrtc doc directly.
+const List<Map<String, String>> defaultIceServers = [
+  {'url': 'stun:stun.l.google.com:19302'},
+  {'url': 'stun:stun4.l.google.com:19302'},
+  {'url': 'stun:stun.fwdnet.net'},
+  {'url': 'stun:stunserver.org'},
+  {
+    'url': 'turn:lmservicesip.ddns.net:3478',
+    'username': 'guest',
+    'credential': 'somepassword'
+  },
+];
+
 class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
-  _RemoteVideoProviderImpl(id) : super(id);
+  List<Map<String, String>> iceServers;
+  _RemoteVideoProviderImpl(id,{this.iceServers=defaultIceServers}):super(id);
 
   RTCPeerConnection peerConnection;
 
@@ -92,9 +112,11 @@ class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
   @override
   Future<MediaStream> initStream() async {
     peerConnection = await createPeerConnection({
-      ...iceServers,
+      ...{
+        'iceServers': iceServers
+      },
       ...{'sdpSemantics': 'unified-plan'}
-    }, config);
+    }, constraints);
 
     await transceiverSpecificationCallback(peerConnection);
 
@@ -115,9 +137,11 @@ class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
         case RTCIceConnectionState.RTCIceConnectionStateCompleted:
         case RTCIceConnectionState.RTCIceConnectionStateNew:
         case RTCIceConnectionState.RTCIceConnectionStateChecking:
-        case RTCIceConnectionState.RTCIceConnectionStateConnected:
         case RTCIceConnectionState.RTCIceConnectionStateCount:
           break; //do nothing
+        case RTCIceConnectionState.RTCIceConnectionStateConnected:
+          notifyAll(stream); //recall with current stream - can trigger reloads
+          break;
       }
     };
 
@@ -173,33 +197,23 @@ class _RemoteVideoProviderImpl extends RemoteVideoProviderInternal {
     await peerConnection.setLocalDescription(s);
     signalingInterface.relayOffer(id, s);
   }
+
+  @override bool isConnected() {
+    return peerConnection != null && (
+        super.isConnected() ||
+        peerConnection.connectionState ==
+            RTCPeerConnectionState.RTCPeerConnectionStateConnected
+    );
+  }
 }
 
 
 
 ///Peer connection config
 ///customize according to webrtc doc directly.
-Map<String, dynamic> config = {
-  'mandatory': [
-    {}
-  ],
+Map<String, dynamic> constraints = {
+  'mandatory': {},
   'optional': [
     {'DtlsSrtpKeyAgreement': true},
-  ]
-};
-
-///Ice servers config. Add stun or turn servers.
-///customize according to webrtc doc directly.
-Map<String, dynamic> iceServers = {
-  'iceServers': [
-    {'url': 'stun:stun.l.google.com:19302'},
-    /*
-       * turn server configuration example.
-      {
-        'url': 'turn:123.45.67.89:3478',
-        'username': 'change_to_real_user',
-        'credential': 'change_to_real_secret'
-      },
-      */
-  ]
+  ],
 };

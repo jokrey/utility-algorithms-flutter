@@ -10,8 +10,10 @@ import '../signaling/signaling_minimal.dart';
 class VCall1to1 {
   ///The local provider, with the id(localName) given in constructor
   LocalVideoProviderInternal localProvider;
+
   ///The remote provider, with the id(remoteName) given in constructor
   RemoteVideoProviderInternal remoteProvider;
+
   ///The signaler the providers will use to negotiate their connections
   MinimalSignaler signaler;
 
@@ -23,13 +25,14 @@ class VCall1to1 {
   ///The signaler the providers will use to negotiate their connections
   ///  if the signaler is already connected it will not be connected
   ///  otherwise it will be connected to on 'init'
-  VCall1to1(String localName, String remoteName, this.signaler)
-      : localProvider = LocalVideoProviderInternal.create(localName),
-        remoteProvider = RemoteVideoProviderInternal.create(remoteName)
-  {
-    //NOTE: Circular dependency only in top level classes, and strictly required
-    //       there is circular functionality,
-    //       but putting it all in a single class is too long and more confusing
+  VCall1to1(
+    String localName,
+    String remoteName,
+    this.signaler,
+    iceServers,
+  )   : localProvider = LocalVideoProviderInternal.create(localName),
+        remoteProvider =
+            RemoteVideoProviderInternal.createWith(remoteName, iceServers) {
     remoteProvider.setSignaler(signaler);
     remoteProvider.setLocal(localProvider);
     signaler.addRemoteProvider(remoteProvider);
@@ -43,7 +46,7 @@ class VCall1to1 {
   ///  waiting for the remote to offer the connection
   Future<void> init() async {
     await localProvider.initStream();
-    if(!signaler.isConnected()) {
+    if (!signaler.isConnected()) {
       await signaler.connect();
     }
     await remoteProvider.offer();
@@ -52,10 +55,10 @@ class VCall1to1 {
   ///Closes the signaler if so requested, closes the local and remote provider
   @mustCallSuper
   Future<void> close({bool closeSignalerConnection = false}) async {
-    if(closeSignalerConnection) {
-      await signaler.close();
-    }
     await localProvider.closeStream();
     await remoteProvider.closeStream();
+    if (closeSignalerConnection) {
+      await signaler.close();
+    }
   }
 }

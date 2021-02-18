@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import '../../../general/observers.dart';
 
+import '../../../general/observers.dart';
 import '../peer_id.dart';
 
 ///Abstract stream provider,
