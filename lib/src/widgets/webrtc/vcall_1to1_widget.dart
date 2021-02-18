@@ -51,10 +51,12 @@ class _VCall1to1WidgetState extends State<VCall1to1Widget> {
     });
     _localRenderer.onResize = _rebuild;
     _remoteRenderer.onResize = _rebuild;
-    for (var rebuildObservable in rebuildObservables) {
-      rebuildObservable.addObserver((_) async {
-        _rebuild();
-      });
+    if (rebuildObservables != null) {
+      for (var rebuildObservable in rebuildObservables) {
+        rebuildObservable.addObserver((_) async {
+          _rebuild();
+        });
+      }
     }
   }
 
@@ -197,7 +199,9 @@ class _VCall1to1WidgetState extends State<VCall1to1Widget> {
                         ),
                       )
                     ] +
-                    additionalBuilder(context, orientation)),
+                    (additionalBuilder == null
+                        ? []
+                        : additionalBuilder(context, orientation))),
           );
         }));
   }
